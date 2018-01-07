@@ -1,0 +1,523 @@
+From b0f6d78354403806c6bc2e423afc33e4e1d9d0b5 Mon Sep 17 00:00:00 2001
+From: Jacob McSwain <jacob.a.mcswain@gmail.com>
+Date: Sun, 4 Jun 2017 23:27:00 -0500
+Subject: [PATCH] EXTREME WIP: Second Screen
+
+---
+ packages/SystemUI/AndroidManifest.xml              |   4 +
+ packages/SystemUI/res/drawable/bluetooth.xml       |   8 ++
+ packages/SystemUI/res/drawable/bluetooth_off.xml   |   8 ++
+ packages/SystemUI/res/drawable/flashlight.xml      |   8 ++
+ packages/SystemUI/res/drawable/flashlight_off.xml  |   8 ++
+ packages/SystemUI/res/drawable/wifi.xml            |   8 ++
+ packages/SystemUI/res/drawable/wifi_off.xml        |   8 ++
+ .../SystemUI/res/layout/keyguard_status_bar.xml    |   1 +
+ packages/SystemUI/res/layout/qs_panel.xml          |   1 +
+ .../SystemUI/res/layout/second_screen_root.xml     |  13 +++
+ .../SystemUI/res/layout/second_screen_text.xml     |  14 +++
+ .../SystemUI/res/layout/second_screen_toggles.xml  |  29 ++++++
+ .../SystemUI/res/layout/status_bar_expanded.xml    |   2 +
+ .../res/layout/status_bar_no_notifications.xml     |   1 +
+ packages/SystemUI/res/values/dimens.xml            |   2 +-
+ .../com/android/systemui/SystemUIApplication.java  |   3 +
+ .../secondscreen/SecondScreenActivity.java         | 100 +++++++++++++++++++++
+ .../systemui/secondscreen/SecondScreenService.java |  26 ++++++
+ .../systemui/secondscreen/SecondScreenText.java    |  21 +++++
+ .../systemui/secondscreen/SecondScreenToggles.java |  17 ++++
+ .../statusbar/phone/StatusBarWindowManager.java    |   1 +
+ .../android/server/policy/PhoneWindowManager.java  |   3 +-
+ 22 files changed, 283 insertions(+), 3 deletions(-)
+ create mode 100644 packages/SystemUI/res/drawable/bluetooth.xml
+ create mode 100644 packages/SystemUI/res/drawable/bluetooth_off.xml
+ create mode 100644 packages/SystemUI/res/drawable/flashlight.xml
+ create mode 100644 packages/SystemUI/res/drawable/flashlight_off.xml
+ create mode 100644 packages/SystemUI/res/drawable/wifi.xml
+ create mode 100644 packages/SystemUI/res/drawable/wifi_off.xml
+ create mode 100644 packages/SystemUI/res/layout/second_screen_root.xml
+ create mode 100644 packages/SystemUI/res/layout/second_screen_text.xml
+ create mode 100644 packages/SystemUI/res/layout/second_screen_toggles.xml
+ create mode 100644 packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenActivity.java
+ create mode 100644 packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenService.java
+ create mode 100644 packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenText.java
+ create mode 100644 packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenToggles.java
+
+diff --git a/packages/SystemUI/AndroidManifest.xml b/packages/SystemUI/AndroidManifest.xml
+index c4ff055..4c891d8 100644
+--- a/packages/SystemUI/AndroidManifest.xml
++++ b/packages/SystemUI/AndroidManifest.xml
+@@ -204,6 +204,10 @@
+             android:exported="true"
+             />
+ 
++        <service
++            android:name="com.android.systemui.secondscreen.SecondScreenService"
++            android:exported="false" />
++
+         <!-- Recents depends on every user having their own SystemUI process, so on user switch,
+              ensure that the process is created by starting this service.
+              -->
+diff --git a/packages/SystemUI/res/drawable/bluetooth.xml b/packages/SystemUI/res/drawable/bluetooth.xml
+new file mode 100644
+index 0000000..cb3954f
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/bluetooth.xml
+@@ -0,0 +1,8 @@
++<!-- drawable/bluetooth.xml -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFF" android:pathData="M14.88,16.29L13,18.17V14.41M13,5.83L14.88,7.71L13,9.58M17.71,7.71L12,2H11V9.58L6.41,5L5,6.41L10.59,12L5,17.58L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71Z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/bluetooth_off.xml b/packages/SystemUI/res/drawable/bluetooth_off.xml
+new file mode 100644
+index 0000000..eeed1ac
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/bluetooth_off.xml
+@@ -0,0 +1,8 @@
++<!-- drawable/bluetooth_off.xml -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFF" android:pathData="M13,5.83L14.88,7.71L13.28,9.31L14.69,10.72L17.71,7.7L12,2H11V7.03L13,9.03M5.41,4L4,5.41L10.59,12L5,17.59L6.41,19L11,14.41V22H12L16.29,17.71L18.59,20L20,18.59M13,18.17V14.41L14.88,16.29" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/flashlight.xml b/packages/SystemUI/res/drawable/flashlight.xml
+new file mode 100644
+index 0000000..f2664eb
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/flashlight.xml
+@@ -0,0 +1,8 @@
++<!-- drawable/lightbulb_on_outline.xml -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFF" android:pathData="M20,11H23V13H20V11M1,11H4V13H1V11M13,1V4H11V1H13M4.92,3.5L7.05,5.64L5.63,7.05L3.5,4.93L4.92,3.5M16.95,5.63L19.07,3.5L20.5,4.93L18.37,7.05L16.95,5.63M12,6A6,6 0 0,1 18,12C18,14.22 16.79,16.16 15,17.2V19A1,1 0 0,1 14,20H10A1,1 0 0,1 9,19V17.2C7.21,16.16 6,14.22 6,12A6,6 0 0,1 12,6M14,21V22A1,1 0 0,1 13,23H11A1,1 0 0,1 10,22V21H14M11,18H13V15.87C14.73,15.43 16,13.86 16,12A4,4 0 0,0 12,8A4,4 0 0,0 8,12C8,13.86 9.27,15.43 11,15.87V18Z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/flashlight_off.xml b/packages/SystemUI/res/drawable/flashlight_off.xml
+new file mode 100644
+index 0000000..4f9d1b0
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/flashlight_off.xml
+@@ -0,0 +1,8 @@
++<!-- drawable/lightbulb_outline.xml -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFF" android:pathData="M12,2A7,7 0 0,1 19,9C19,11.38 17.81,13.47 16,14.74V17A1,1 0 0,1 15,18H9A1,1 0 0,1 8,17V14.74C6.19,13.47 5,11.38 5,9A7,7 0 0,1 12,2M9,21V20H15V21A1,1 0 0,1 14,22H10A1,1 0 0,1 9,21M12,4A5,5 0 0,0 7,9C7,11.05 8.23,12.81 10,13.58V16H14V13.58C15.77,12.81 17,11.05 17,9A5,5 0 0,0 12,4Z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/wifi.xml b/packages/SystemUI/res/drawable/wifi.xml
+new file mode 100644
+index 0000000..fb14ba2
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/wifi.xml
+@@ -0,0 +1,8 @@
++<!-- drawable/wifi.xml -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFF" android:pathData="M12,21L15.6,16.2C14.6,15.45 13.35,15 12,15C10.65,15 9.4,15.45 8.4,16.2L12,21M12,3C7.95,3 4.21,4.34 1.2,6.6L3,9C5.5,7.12 8.62,6 12,6C15.38,6 18.5,7.12 21,9L22.8,6.6C19.79,4.34 16.05,3 12,3M12,9C9.3,9 6.81,9.89 4.8,11.4L6.6,13.8C8.1,12.67 9.97,12 12,12C14.03,12 15.9,12.67 17.4,13.8L19.2,11.4C17.19,9.89 14.7,9 12,9Z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/wifi_off.xml b/packages/SystemUI/res/drawable/wifi_off.xml
+new file mode 100644
+index 0000000..1486695
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/wifi_off.xml
+@@ -0,0 +1,8 @@
++<!-- drawable/wifi_off.xml -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFF" android:pathData="M2.28,3L1,4.27L2.47,5.74C2.04,6 1.61,6.29 1.2,6.6L3,9C3.53,8.6 4.08,8.25 4.66,7.93L6.89,10.16C6.15,10.5 5.44,10.91 4.8,11.4L6.6,13.8C7.38,13.22 8.26,12.77 9.2,12.47L11.75,15C10.5,15.07 9.34,15.5 8.4,16.2L12,21L14.46,17.73L17.74,21L19,19.72M12,3C9.85,3 7.8,3.38 5.9,4.07L8.29,6.47C9.5,6.16 10.72,6 12,6C15.38,6 18.5,7.11 21,9L22.8,6.6C19.79,4.34 16.06,3 12,3M12,9C11.62,9 11.25,9 10.88,9.05L14.07,12.25C15.29,12.53 16.43,13.07 17.4,13.8L19.2,11.4C17.2,9.89 14.7,9 12,9Z" />
++</vector>
+diff --git a/packages/SystemUI/res/layout/keyguard_status_bar.xml b/packages/SystemUI/res/layout/keyguard_status_bar.xml
+index 36ed8f8..9b13342 100644
+--- a/packages/SystemUI/res/layout/keyguard_status_bar.xml
++++ b/packages/SystemUI/res/layout/keyguard_status_bar.xml
+@@ -20,6 +20,7 @@
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
+     android:id="@+id/keyguard_header"
++    android:layout_marginTop="160px"
+     android:layout_width="match_parent"
+     android:layout_height="@dimen/status_bar_header_height_keyguard"
+     android:baselineAligned="false"
+diff --git a/packages/SystemUI/res/layout/qs_panel.xml b/packages/SystemUI/res/layout/qs_panel.xml
+index 26c7339..0c21aba 100644
+--- a/packages/SystemUI/res/layout/qs_panel.xml
++++ b/packages/SystemUI/res/layout/qs_panel.xml
+@@ -16,6 +16,7 @@
+ <com.android.systemui.qs.QSContainer
+         xmlns:android="http://schemas.android.com/apk/res/android"
+         android:id="@+id/quick_settings_container"
++        android:layout_marginTop="160px"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:background="@drawable/qs_background_primary"
+diff --git a/packages/SystemUI/res/layout/second_screen_root.xml b/packages/SystemUI/res/layout/second_screen_root.xml
+new file mode 100644
+index 0000000..00090ca
+--- /dev/null
++++ b/packages/SystemUI/res/layout/second_screen_root.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:orientation="vertical"
++    android:layout_width="fill_parent"
++    android:layout_height="fill_parent">
++
++    <android.support.v4.view.ViewPager
++        android:id="@+id/second_screen_viewpager"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent">
++    </android.support.v4.view.ViewPager>
++
++</LinearLayout>
+diff --git a/packages/SystemUI/res/layout/second_screen_text.xml b/packages/SystemUI/res/layout/second_screen_text.xml
+new file mode 100644
+index 0000000..03ba1bc
+--- /dev/null
++++ b/packages/SystemUI/res/layout/second_screen_text.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:orientation="vertical"
++    android:layout_width="fill_parent"
++    android:layout_height="fill_parent">
++
++    <TextView
++        android:id="@+id/second_screen_text"
++        android:layout_gravity="center|right"
++        android:textSize="32dp"
++        android:layout_width="wrap_content"
++        android:layout_height="match_parent" />
++
++</LinearLayout>
+diff --git a/packages/SystemUI/res/layout/second_screen_toggles.xml b/packages/SystemUI/res/layout/second_screen_toggles.xml
+new file mode 100644
+index 0000000..549a1d1
+--- /dev/null
++++ b/packages/SystemUI/res/layout/second_screen_toggles.xml
+@@ -0,0 +1,29 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:gravity="center"
++    android:orientation="horizontal"
++    android:layout_width="fill_parent"
++    android:layout_height="fill_parent">
++
++<ImageView
++    android:id="@+id/bluetooth"
++    android:layout_width="32dp" 
++    android:layout_height="32dp"
++    android:src="@drawable/bluetooth" />
++
++<ImageView
++    android:id="@+id/wifi"
++    android:layout_marginLeft="50dp"
++    android:layout_marginRight="50dp"
++    android:layout_width="32dp" 
++    android:layout_height="32dp"
++    android:src="@drawable/wifi" />
++
++<ImageView
++    android:id="@+id/flashlight"
++    android:layout_width="32dp" 
++    android:layout_height="32dp"
++    android:src="@drawable/flashlight_off" />
++
++</LinearLayout>
+diff --git a/packages/SystemUI/res/layout/status_bar_expanded.xml b/packages/SystemUI/res/layout/status_bar_expanded.xml
+index 166cb35..c0d6ecc 100644
+--- a/packages/SystemUI/res/layout/status_bar_expanded.xml
++++ b/packages/SystemUI/res/layout/status_bar_expanded.xml
+@@ -22,6 +22,7 @@
+     xmlns:androidprv="http://schemas.android.com/apk/res-auto"
+     xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
+     android:id="@+id/notification_panel"
++    android:layout_marginTop="160px"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:background="@android:color/transparent"
+@@ -64,6 +65,7 @@
+ 
+         <com.android.systemui.statusbar.stack.NotificationStackScrollLayout
+             android:id="@+id/notification_stack_scroller"
++            android:layout_marginTop="160px"
+             android:layout_width="@dimen/notification_panel_width"
+             android:layout_height="match_parent"
+             android:layout_gravity="@integer/notification_panel_layout_gravity"
+diff --git a/packages/SystemUI/res/layout/status_bar_no_notifications.xml b/packages/SystemUI/res/layout/status_bar_no_notifications.xml
+index 6f87184..12b9c75 100644
+--- a/packages/SystemUI/res/layout/status_bar_no_notifications.xml
++++ b/packages/SystemUI/res/layout/status_bar_no_notifications.xml
+@@ -18,6 +18,7 @@
+ <com.android.systemui.statusbar.EmptyShadeView
+         xmlns:android="http://schemas.android.com/apk/res/android"
+         android:layout_width="match_parent"
++        android:layout_marginTop="160px"
+         android:layout_height="wrap_content"
+         android:visibility="gone"
+         >
+diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
+index 46b3ab7..668734b 100644
+--- a/packages/SystemUI/res/values/dimens.xml
++++ b/packages/SystemUI/res/values/dimens.xml
+@@ -544,7 +544,7 @@
+     <dimen name="volume_slider_interspacing">8dp</dimen>
+ 
+     <!-- Volume dialog vertical offset from the top of the screen -->
+-    <dimen name="volume_offset_top">0dp</dimen>
++    <dimen name="volume_offset_top">244px</dimen>
+ 
+     <!-- Standard image button size for volume dialog buttons -->
+     <dimen name="volume_button_size">48dp</dimen>
+diff --git a/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java b/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java
+index 52b5a54..67b74b8 100644
+--- a/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java
++++ b/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java
+@@ -85,6 +85,8 @@ public class SystemUIApplication extends Application {
+         setTheme(R.style.systemui_theme);
+ 
+         SystemUIFactory.createFromConfig(this);
++        Intent intent = new Intent(this, com.android.systemui.secondscreen.SecondScreenService.class);
++        startService(intent);
+ 
+         if (Process.myUserHandle().equals(UserHandle.SYSTEM)) {
+             IntentFilter filter = new IntentFilter(Intent.ACTION_BOOT_COMPLETED);
+@@ -152,6 +154,7 @@ public class SystemUIApplication extends Application {
+ 
+         Log.v(TAG, "Starting SystemUI services for user " +
+                 Process.myUserHandle().getIdentifier() + ".");
++
+         final int N = services.length;
+         for (int i=0; i<N; i++) {
+             Class<?> cl = services[i];
+diff --git a/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenActivity.java b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenActivity.java
+new file mode 100644
+index 0000000..3fab39e
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenActivity.java
+@@ -0,0 +1,100 @@
++package com.android.systemui.secondscreen;
++
++import android.app.Activity;
++import android.support.v4.app.FragmentActivity;
++import android.support.v4.app.FragmentManager;
++import android.support.v4.app.Fragment;
++import android.support.v4.view.ViewPager;
++import android.support.v13.app.FragmentPagerAdapter;
++import android.content.Context;
++import android.content.Intent;
++import android.graphics.Color;
++import android.graphics.PixelFormat;
++import android.os.Bundle;
++import android.view.Gravity;
++import android.view.LayoutInflater;
++import android.view.MotionEvent;
++import android.view.View;
++import android.view.ViewGroup;
++import android.view.View.OnTouchListener;
++import android.view.WindowManager;
++import android.widget.LinearLayout;
++
++import java.util.ArrayList;
++
++import com.android.systemui.R;
++
++public class SecondScreenActivity extends FragmentActivity implements OnTouchListener {
++
++    private LinearLayout rootView;
++    private ViewsPagerAdapter viewsPagerAdapter;
++    private ViewPager viewPager;
++    private WindowManager wm;
++    LayoutInflater inflater;
++
++    @Override
++    public void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++
++        inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
++
++        wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
++
++        rootView = (LinearLayout) inflater.inflate(R.layout.second_screen_root, null);
++        rootView.setBackgroundColor(Color.BLACK);
++        rootView.setOnTouchListener(this);
++
++        viewPager = (ViewPager) rootView.findViewById(R.id.second_screen_viewpager);
++        viewsPagerAdapter = new ViewsPagerAdapter(getFragmentManager());
++        viewPager.setAdapter(viewsPagerAdapter);
++
++        WindowManager.LayoutParams params = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_ERROR, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT);
++        params.gravity = Gravity.LEFT | Gravity.TOP;
++        params.x = 400;
++        params.y = 0;
++        params.width = 1040;
++        params.height = 160;
++        wm.addView(rootView, params);
++
++    }
++
++    @Override
++    public void onDestroy() {
++        super.onDestroy();
++        if (rootView != null) {
++            wm.removeView(rootView);
++            rootView = null;
++        }
++    }
++
++    @Override
++    public boolean onTouch(View v, MotionEvent event) {
++        System.out.println("SecondScreenTouch");
++        return false;
++    }
++
++    class ViewsPagerAdapter extends FragmentPagerAdapter {
++        private ArrayList<Fragment> frags = new ArrayList<>();
++        
++        public ViewsPagerAdapter(FragmentManager fm) {
++            super(fm);
++            frags.add((Fragment) new SecondScreenText());
++            frags.add((Fragment) new SecondScreenToggles());
++        }
++
++        @Override
++        public Fragment getItem(int position) {
++            return (Fragment) frags.get(position);
++        }
++
++        @Override
++        public CharSequence getPageTitle(int position) {
++            return "";*
++        }
++
++        @Override
++        public int getCount() {
++            return frags.size();
++        }
++    }   
++}
+diff --git a/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenService.java b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenService.java
+new file mode 100644
+index 0000000..3512c6d
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenService.java
+@@ -0,0 +1,26 @@
++package com.android.systemui.secondscreen;
++
++import android.app.Service;
++import android.content.Intent;
++import android.os.IBinder;
++
++public class SecondScreenService extends Service {
++
++    @Override
++    public IBinder onBind(Intent intent) {
++        return null;
++    }
++
++    @Override
++    public void onCreate() {
++        super.onCreate();
++        Intent viewIntent = new Intent(this, SecondScreenActivity.class);
++        viewIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
++        startActivity(viewIntent);
++    }
++
++    @Override
++    public void onDestroy() {
++        super.onDestroy();
++    }
++}
+diff --git a/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenText.java b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenText.java
+new file mode 100644
+index 0000000..39be912
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenText.java
+@@ -0,0 +1,21 @@
++package com.android.systemui.secondscreen;
++
++import android.graphics.Color;
++import android.os.Bundle;
++import android.support.v4.app.Fragment;
++import android.view.LayoutInflater;
++import android.view.ViewGroup;
++import android.widget.TextView;
++
++public class SecondScreenText extends Fragment {
++
++    @Override
++    private View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
++        ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.second_screen_text, container, false);
++        TextView text = (TextView) rootView.findViewById(R.id.second_screen_text);
++        text.setText("V20");
++        text.setTextColor(Color.WHITE);
++        return rootview;
++    }
++
++}
+diff --git a/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenToggles.java b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenToggles.java
+new file mode 100644
+index 0000000..d68c28b
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenToggles.java
+@@ -0,0 +1,17 @@
++package com.android.systemui.secondscreen;
++
++import android.graphics.Color;
++import android.os.Bundle;
++import android.support.v4.app.Fragment;
++import android.view.LayoutInflater;
++import android.view.ViewGroup;
++
++public class SecondScreenToggles extends Fragment {
++
++    @Override
++    private View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
++        ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.second_screen_toggles, container, false);
++        return rootview;
++    }
++
++}
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java
+index a7a792b..0957067 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java
+@@ -102,6 +102,7 @@ public class StatusBarWindowManager implements RemoteInputController.Callback {
+         mLp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+         mLp.setTitle("StatusBar");
+         mLp.packageName = mContext.getPackageName();
++        mLp.y = 160;
+         mStatusBarView = statusBarView;
+         mBarHeight = barHeight;
+         mWindowManager.addView(mStatusBarView, mLp);
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index eca954a..06603ba 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -2963,8 +2963,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+     public void onConfigurationChanged() {
+         final Resources res = mContext.getResources();
+ 
+-        mStatusBarHeight =
+-                res.getDimensionPixelSize(com.android.internal.R.dimen.status_bar_height);
++        mStatusBarHeight = 244;
+ 
+         updateNavigationBarSize();
+ 
+-- 
+2.1.4
+
