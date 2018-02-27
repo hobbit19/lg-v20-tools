@@ -1,7 +1,7 @@
-From b0f6d78354403806c6bc2e423afc33e4e1d9d0b5 Mon Sep 17 00:00:00 2001
+From 3c48ecee9b4b50fec17b426bfda90cedbb9ad937 Mon Sep 17 00:00:00 2001
 From: Jacob McSwain <jacob.a.mcswain@gmail.com>
 Date: Sun, 4 Jun 2017 23:27:00 -0500
-Subject: [PATCH] EXTREME WIP: Second Screen
+Subject: [PATCH 1/2] EXTREME WIP: Second Screen
 
 ---
  packages/SystemUI/AndroidManifest.xml              |   4 +
@@ -42,10 +42,10 @@ Subject: [PATCH] EXTREME WIP: Second Screen
  create mode 100644 packages/SystemUI/src/com/android/systemui/secondscreen/SecondScreenToggles.java
 
 diff --git a/packages/SystemUI/AndroidManifest.xml b/packages/SystemUI/AndroidManifest.xml
-index c4ff055..4c891d8 100644
+index 969e555..1b780de 100644
 --- a/packages/SystemUI/AndroidManifest.xml
 +++ b/packages/SystemUI/AndroidManifest.xml
-@@ -197,20 +197,24 @@
+@@ -190,20 +190,24 @@
               The application theme is set again from onCreate to take effect for those views. -->
  
          <!-- Broadcast receiver that gets the broadcast at boot time and starts
@@ -155,7 +155,7 @@ index 0000000..1486695
 +    <path android:fillColor="#FFFFFF" android:pathData="M2.28,3L1,4.27L2.47,5.74C2.04,6 1.61,6.29 1.2,6.6L3,9C3.53,8.6 4.08,8.25 4.66,7.93L6.89,10.16C6.15,10.5 5.44,10.91 4.8,11.4L6.6,13.8C7.38,13.22 8.26,12.77 9.2,12.47L11.75,15C10.5,15.07 9.34,15.5 8.4,16.2L12,21L14.46,17.73L17.74,21L19,19.72M12,3C9.85,3 7.8,3.38 5.9,4.07L8.29,6.47C9.5,6.16 10.72,6 12,6C15.38,6 18.5,7.11 21,9L22.8,6.6C19.79,4.34 16.06,3 12,3M12,9C11.62,9 11.25,9 10.88,9.05L14.07,12.25C15.29,12.53 16.43,13.07 17.4,13.8L19.2,11.4C17.2,9.89 14.7,9 12,9Z" />
 +</vector>
 diff --git a/packages/SystemUI/res/layout/keyguard_status_bar.xml b/packages/SystemUI/res/layout/keyguard_status_bar.xml
-index 36ed8f8..9b13342 100644
+index 8cdda22..c4e43d88 100644
 --- a/packages/SystemUI/res/layout/keyguard_status_bar.xml
 +++ b/packages/SystemUI/res/layout/keyguard_status_bar.xml
 @@ -13,20 +13,21 @@
@@ -281,10 +281,11 @@ index 0000000..549a1d1
 +
 +</LinearLayout>
 diff --git a/packages/SystemUI/res/layout/status_bar_expanded.xml b/packages/SystemUI/res/layout/status_bar_expanded.xml
-index 166cb35..c0d6ecc 100644
+index 3d70969..daf41e9 100644
 --- a/packages/SystemUI/res/layout/status_bar_expanded.xml
 +++ b/packages/SystemUI/res/layout/status_bar_expanded.xml
-@@ -15,20 +15,21 @@
+@@ -14,20 +14,21 @@
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
  ** See the License for the specific language governing permissions and 
  ** limitations under the License.
  */
@@ -292,7 +293,6 @@ index 166cb35..c0d6ecc 100644
  
  <com.android.systemui.statusbar.phone.NotificationPanelView 
      xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:androidprv="http://schemas.android.com/apk/res-auto"
      xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
      android:id="@+id/notification_panel"
 +    android:layout_marginTop="160px"
@@ -301,12 +301,12 @@ index 166cb35..c0d6ecc 100644
      android:background="@android:color/transparent"
      >
  
-     <com.android.keyguard.CarrierText
-         android:id="@+id/carrier_label"
-         android:layout_height="@dimen/carrier_label_height"
-         android:layout_width="match_parent"
-         android:layout_marginBottom="@dimen/close_handle_height"
-@@ -57,20 +58,21 @@
+     <include
+         layout="@layout/keyguard_status_view"
+         android:layout_height="wrap_content"
+         android:visibility="gone" />
+ 
+@@ -43,20 +44,21 @@
              android:id="@+id/qs_auto_reinflate_container"
              android:layout="@layout/qs_panel"
              android:layout_width="@dimen/notification_panel_width"
@@ -355,10 +355,10 @@ index 6f87184..12b9c75 100644
              android:gravity="top|center_horizontal"
              android:textColor="#e6ffffff"
 diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
-index 46b3ab7..668734b 100644
+index 38af096..70cf25c 100644
 --- a/packages/SystemUI/res/values/dimens.xml
 +++ b/packages/SystemUI/res/values/dimens.xml
-@@ -537,21 +537,21 @@
+@@ -534,21 +534,21 @@
           with the other icons. -->
      <dimen name="fingerprint_icon_additional_padding">4dp</dimen>
  
@@ -382,10 +382,10 @@ index 46b3ab7..668734b 100644
      <dimen name="volume_dialog_padding_end">40dp</dimen>
  
 diff --git a/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java b/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java
-index 52b5a54..67b74b8 100644
+index 4b9ae2a..20731c8 100644
 --- a/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java
 +++ b/packages/SystemUI/src/com/android/systemui/SystemUIApplication.java
-@@ -78,20 +78,22 @@ public class SystemUIApplication extends Application {
+@@ -80,20 +80,22 @@ public class SystemUIApplication extends Application {
  
      @Override
      public void onCreate() {
@@ -408,7 +408,7 @@ index 52b5a54..67b74b8 100644
                      if (mBootCompleted) return;
  
                      if (DEBUG) Log.v(TAG, "BOOT_COMPLETED received");
-@@ -145,20 +147,21 @@ public class SystemUIApplication extends Application {
+@@ -154,20 +156,21 @@ public class SystemUIApplication extends Application {
              // check to see if maybe it was already completed long before we began
              // see ActivityManagerService.finishBooting()
              if ("1".equals(SystemProperties.get("sys.boot_completed"))) {
@@ -619,10 +619,10 @@ index 0000000..d68c28b
 +
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java
-index a7a792b..0957067 100644
+index ab57f3b..e7ee0d1 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarWindowManager.java
-@@ -95,20 +95,21 @@ public class StatusBarWindowManager implements RemoteInputController.Callback {
+@@ -122,20 +122,21 @@ public class StatusBarWindowManager implements RemoteInputController.Callback,
                          | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
                          | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
                          | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
@@ -639,16 +639,16 @@ index a7a792b..0957067 100644
          mWindowManager.addView(mStatusBarView, mLp);
          mLpChanged = new WindowManager.LayoutParams();
          mLpChanged.copyFrom(mLp);
-     }
  
-     private void applyKeyguardFlags(State state) {
-         if (state.keyguardShowing) {
-             mLpChanged.privateFlags |= WindowManager.LayoutParams.PRIVATE_FLAG_KEYGUARD;
+         final boolean isBlurSupported = mContext.getResources().getBoolean(
+                 com.android.internal.R.bool.config_uiBlurEnabled);
+         if (isBlurSupported) {
+             final Point xy = getDisplayDimensions(mWindowManager);
 diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
-index eca954a..06603ba 100644
+index be564d9..d13c522 100644
 --- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
 +++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
-@@ -2956,22 +2956,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+@@ -2916,22 +2916,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                  || (navigationPresence == PRESENCE_INTERNAL
                          && isHidden(mLidNavigationAccessibility))) {
              config.navigationHidden = Configuration.NAVIGATIONHIDDEN_YES;
@@ -663,15 +663,15 @@ index eca954a..06603ba 100644
 -                res.getDimensionPixelSize(com.android.internal.R.dimen.status_bar_height);
 +        mStatusBarHeight = 244;
  
-         updateNavigationBarSize();
+         // Height of the navigation bar when presented horizontally at bottom
+         mNavigationBarHeightForRotationDefault[mPortraitRotation] =
+         mNavigationBarHeightForRotationDefault[mUpsideDownRotation] =
+                 res.getDimensionPixelSize(com.android.internal.R.dimen.navigation_bar_height);
+         mNavigationBarHeightForRotationDefault[mLandscapeRotation] =
+         mNavigationBarHeightForRotationDefault[mSeascapeRotation] = res.getDimensionPixelSize(
+                 com.android.internal.R.dimen.navigation_bar_height_landscape);
  
-         if (ALTERNATE_CAR_MODE_NAV_SIZE) {
-             // Height of the navigation bar when presented horizontally at bottom
-             mNavigationBarHeightForRotationInCarMode[mPortraitRotation] =
-             mNavigationBarHeightForRotationInCarMode[mUpsideDownRotation] =
-                     res.getDimensionPixelSize(
-                             com.android.internal.R.dimen.navigation_bar_height_car_mode);
-             mNavigationBarHeightForRotationInCarMode[mLandscapeRotation] =
+         // Width of the navigation bar when presented vertically along one side
 -- 
 2.1.4
 
